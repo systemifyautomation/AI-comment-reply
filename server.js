@@ -56,21 +56,21 @@ const server = http.createServer(async (req, res) => {
 
   try {
     const requestUrl = new URL(req.url, 'http://localhost');
-    if (req.method === 'POST' && requestUrl.pathname === '/reply') return forward(res, replyWebhookUrl, 'POST', await readJson(req));
+    if (req.method === 'POST' && requestUrl.pathname === '/reply') return await forward(res, replyWebhookUrl, 'POST', await readJson(req));
     if (req.method === 'POST' && requestUrl.pathname === '/auth/request-code') {
       const body = await readJson(req);
-      return forward(res, authWebhookUrl, 'POST', {...body, action: 'request_code'});
+      return await forward(res, authWebhookUrl, 'POST', {...body, action: 'request_code'});
     }
     if (req.method === 'POST' && requestUrl.pathname === '/auth/verify-code') {
       const body = await readJson(req);
-      return forward(res, authWebhookUrl, 'POST', {...body, action: 'verify_code'});
+      return await forward(res, authWebhookUrl, 'POST', {...body, action: 'verify_code'});
     }
     if (req.method === 'GET' && requestUrl.pathname === '/accounts') {
       const email = requestUrl.searchParams.get('email');
       if (!email) return res.writeHead(400).end(JSON.stringify({error: 'email is required.'}));
       const webhookUrl = new URL(accountsWebhookUrl);
       webhookUrl.searchParams.set('email', email);
-      return forward(res, webhookUrl, 'GET');
+      return await forward(res, webhookUrl, 'GET');
     }
     res.writeHead(404).end();
   } catch (error) {

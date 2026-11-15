@@ -1,0 +1,2 @@
+email,code_hash,expires_at,attempts,last_sent_at,verified_at
+example@example.com,8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92,2000-01-01T00:00:00.000Z,0,2000-01-01T00:00:00.000Z,

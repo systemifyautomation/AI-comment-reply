@@ -1,0 +1,54 @@
+node:internal/deps/undici/undici:13510
+      Error.captureStackTrace(err);
+            ^
+
+TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async forward (C:\Users\PCZZ3\Documents\GitHub\AI comment reply\server.js:40:20) {
+  [cause]: AggregateError [EACCES]: 
+      at internalConnectMultiple (node:net:1134:18)
+      at afterConnectMultiple (node:net:1715:7) {
+    code: 'EACCES',
+    [errors]: [
+      Error: connect EACCES 2a06:98c1:3121::5:443
+          at createConnectionError (node:net:1678:14)
+          at afterConnectMultiple (node:net:1708:16) {
+        errno: -4092,
+        code: 'EACCES',
+        syscall: 'connect',
+        address: '2a06:98c1:3121::5',
+        port: 443
+      },
+      Error: connect EACCES 188.114.96.5:443
+          at createConnectionError (node:net:1678:14)
+          at afterConnectMultiple (node:net:1708:16) {
+        errno: -4092,
+        code: 'EACCES',
+        syscall: 'connect',
+        address: '188.114.96.5',
+        port: 443
+      },
+      Error: connect EACCES 2a06:98c1:3120::5:443
+          at createConnectionError (node:net:1678:14)
+          at afterConnectMultiple (node:net:1708:16) {
+        errno: -4092,
+        code: 'EACCES',
+        syscall: 'connect',
+        address: '2a06:98c1:3120::5',
+        port: 443
+      },
+      Error: connect EACCES 188.114.97.5:443
+          at createConnectionError (node:net:1678:14)
+          at afterConnectMultiple (node:net:1708:16) {
+        errno: -4092,
+        code: 'EACCES',
+        syscall: 'connect',
+        address: '188.114.97.5',
+        port: 443
+      }
+    ]
+  }
+}
+
+Node.js v22.20.0

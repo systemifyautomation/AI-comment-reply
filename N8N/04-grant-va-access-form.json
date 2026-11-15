@@ -10,7 +10,8 @@
         "formFields": {
           "values": [
             { "fieldName": "email", "fieldLabel": "VA email address", "fieldType": "email", "placeholder": "va@example.com", "requiredField": true },
-            { "fieldName": "client_id", "fieldLabel": "Client UUID", "fieldType": "text", "placeholder": "11111111-1111-4111-8111-111111111111", "requiredField": true }
+            { "fieldName": "client_id", "fieldLabel": "Client UUID", "fieldType": "text", "placeholder": "11111111-1111-4111-8111-111111111111", "requiredField": true },
+            { "fieldName": "role", "fieldLabel": "Access role", "fieldType": "dropdown", "fieldOptions": { "values": [{ "option": "admin" }, { "option": "manager" }, { "option": "user" }] }, "requiredField": true }
           ]
         },
         "responseMode": "lastNode",
@@ -20,7 +21,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const email = String($json.email ?? '').trim().toLowerCase();\nconst clientId = String($json.client_id ?? '').trim();\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Enter a valid VA email address.');\nif (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientId)) throw new Error('Enter a valid client UUID.');\nreturn [{ json: { email, client_id: clientId, active: true } }];"
+        "jsCode": "const email = String($json.email ?? '').trim().toLowerCase();\nconst clientId = String($json.client_id ?? '').trim();\nconst role = String($json.role ?? '').trim().toLowerCase();\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Enter a valid VA email address.');\nif (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientId)) throw new Error('Enter a valid client UUID.');\nif (!['admin', 'manager', 'user'].includes(role)) throw new Error('Choose admin, manager, or user as the access role.');\nreturn [{ json: { email, client_id: clientId, active: true, role } }];"
       },
       "id": "2", "name": "Validate access request", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [250, 300]
     },
@@ -30,7 +31,8 @@
         "fieldsUi": { "fieldValues": [
           { "fieldId": "email", "fieldValue": "={{ $json.email }}" },
           { "fieldId": "client_id", "fieldValue": "={{ $json.client_id }}" },
-          { "fieldId": "active", "fieldValue": "true" }
+          { "fieldId": "active", "fieldValue": "true" },
+          { "fieldId": "role", "fieldValue": "={{ $json.role }}" }
         ] }
       },
       "id": "3", "name": "Create VA access", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [500, 300],

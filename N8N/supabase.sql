@@ -25,14 +25,44 @@ create table if not exists public.replyflow_client_access (
   email text not null check (email = lower(email)),
   client_id uuid not null references public.replyflow_clients(id) on delete cascade,
   active boolean not null default true,
+  role text not null default 'user' check (role in ('admin', 'manager', 'user')),
   unique (email, client_id)
 );
+
+-- Makes the role column safe to add when this schema is applied to an existing
+-- ReplyFlow database. Existing assignments become standard user assignments.
+alter table public.replyflow_client_access
+  add column if not exists role text;
+
+update public.replyflow_client_access
+set role = 'user'
+where role is null;
+
+alter table public.replyflow_client_access
+  alter column role set default 'user',
+  alter column role set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'replyflow_client_access_role_check'
+      and conrelid = 'public.replyflow_client_access'::regclass
+  ) then
+    alter table public.replyflow_client_access
+      add constraint replyflow_client_access_role_check
+      check (role in ('admin', 'manager', 'user'));
+  end if;
+end;
+$$;
 
 -- Read-only join used by the native n8n Supabase node to build the client dropdown.
 create or replace view public.replyflow_available_clients as
 select
   a.email,
   a.active,
+  a.role,
   c.id,
   c.name,
   c.system_prompt
@@ -156,6 +186,6 @@ insert into public.replyflow_clients (id, name, system_prompt)
 values ('11111111-1111-4111-8111-111111111111', 'Acme', 'Write concise, helpful replies in Acme''s friendly professional voice.')
 on conflict (id) do nothing;
 
-insert into public.replyflow_client_access (id, email, client_id)
-values ('22222222-2222-4222-8222-222222222222', 'va@example.com', '11111111-1111-4111-8111-111111111111')
+insert into public.replyflow_client_access (id, email, client_id, role)
+values ('22222222-2222-4222-8222-222222222222', 'va@example.com', '11111111-1111-4111-8111-111111111111', 'user')
 on conflict do nothing;

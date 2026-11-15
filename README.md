@@ -9,49 +9,21 @@ ReplyFlow includes adapters for YouTube, Facebook, Instagram, Reddit, LinkedIn, 
 ## Architecture
 
 ```text
-Chrome extension -> ReplyFlow relay -> n8n workflows
+Chrome extension -> n8n workflows
 ```
 
-The extension calls the relay only. The relay holds the private n8n webhook URLs in `.env` and forwards requests without changing their body data.
+n8n is the complete backend. The extension sends HTTP requests directly to its active production webhooks; no Node relay, local server, or extension-side `.env` file is required.
 
-## Relay setup
-
-Deploy `server.js` separately from the extension. It requires Node.js 18 or later. On the relay host, create `.env` from `.env.example`:
-
-```dotenv
-REPLYFLOW_N8N_URL=https://your-n8n-host
-```
-
-Start it with:
-
-```powershell
-node server.js
-```
-
-Expose the relay through HTTPS in production. Its routes are:
-
-| Method | Relay endpoint | n8n webhook | Purpose |
-| --- | --- | --- | --- |
-| POST | `/auth/request-code` | `/webhook/replyflow-email-verification` | Email a verification code. |
-| POST | `/auth/verify-code` | `/webhook/replyflow-email-verification` | Verify a code. |
-| GET | `/accounts?email=...` | `/webhook/replyflow-accounts` | Get the clients available to the email. |
-| POST | `/reply` | `/webhook/replyflow` | Generate a reply using the selected client's information. |
+The n8n base URL is set once in `background.js` as `N8N_BASE_URL`. It is a public routing URL, so it cannot be kept secret in a Chrome extension. Keep credentials, Supabase keys, SMTP keys, and OpenAI keys inside n8n instead.
 
 Import-ready n8n workflows and the required Supabase schema are in [N8N](N8N/README.md). They use Brevo SMTP for the email code and Supabase for client access and verification-code storage.
 
 ## Extension setup
 
 1. Load the extension folder in `chrome://extensions` using **Developer mode** and **Load unpacked**.
-2. Configure Chrome managed storage:
-
-   ```json
-   { "proxyUrl": "https://replyflow.example/reply" }
-   ```
-
-   This is the non-secret relay URL, never an n8n webhook URL.
-3. In the extension popup, open **Settings**, enter an email, and verify the emailed code.
-4. If one client is returned, it is selected automatically. If multiple clients are returned, choose one from the dropdown and click **Confirm client**.
-5. Generate replies in a supported platform or use the manual-reply tool.
+2. In the extension popup, open **Settings**, enter an email, and verify the emailed code.
+3. If one client is returned, it is selected automatically. If multiple clients are returned, choose one from the dropdown and click **Confirm client**.
+4. Generate replies in a supported platform or use the manual-reply tool.
 
 ## Stored user data structure
 
@@ -152,10 +124,9 @@ For every request, return a non-2xx status with an `error`, `message`, `descript
 
 ## Security notes
 
-- Keep the actual `.env` only on the relay host; do not distribute it with the extension.
 - n8n must verify that the email is authorized for the supplied `accountId`. Do not trust extension-local storage alone for access control.
-- Restrict `ALLOWED_ORIGINS` to the production extension ID where possible.
-- Rotate the former directly exposed n8n webhook URL before production use.
+- Keep Supabase, SMTP, and OpenAI credentials in n8n credentials or its server environment. Do not put them in the extension.
+- Treat each webhook URL as public and use n8n authentication or a request signature if the workflow is exposed outside this extension.
 
 ## Icons
 

@@ -6,15 +6,8 @@
   "permissions": [
     "storage"
   ],
-  "storage": {
-    "managed_schema": "managed_schema.json"
-  },
   "host_permissions": [
-    "https://www.youtube.com/*",
-    "https://*.n8n.cloud/*",
-    "https://*/*",
-    "http://localhost/*",
-    "http://127.0.0.1/*"
+    "https://n8n.systemifyautomation.com/*"
   ],
   "background": {
     "service_worker": "background.js"
