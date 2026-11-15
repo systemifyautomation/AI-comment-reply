@@ -147,7 +147,7 @@ document.getElementById('reset-app').addEventListener('click', async () => {
     setVerificationState(false);
     showUser(null);
     showStatus('ReplyFlow data has been cleared.');
-    document.getElementById('history').innerHTML = '<div class="empty"><div class="empty-symbol">*</div><strong>No replies yet</strong>Open a supported platform, click Reply on a comment, then Generate AI Reply.</div>';
+    document.getElementById('history').innerHTML = '<div class="empty"><div class="empty-symbol">*</div><strong>No replies yet</strong>Open a supported platform, click Reply on a comment, then Generate Reply.</div>';
     document.getElementById('count').textContent = '0';
   } catch (error) { showStatus(error.message, true); }
 });
@@ -173,14 +173,22 @@ async function restoreState() {
   document.getElementById('count').textContent = history.length;
   const target = document.getElementById('history');
   if (!history.length) {
-    target.innerHTML = '<div class="empty"><div class="empty-symbol">*</div><strong>No replies yet</strong>Open a supported platform, click Reply on a comment, then Generate AI Reply.</div>';
+    target.innerHTML = '<div class="empty"><div class="empty-symbol">*</div><strong>No replies yet</strong>Open a supported platform, click Reply on a comment, then Generate Reply.</div>';
     return;
   }
   for (const item of history.slice(0, 15)) {
     const node = document.createElement('article');
     node.className = 'item';
     const time = new Date(item.createdAt).toLocaleString(undefined, {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'});
-    node.innerHTML = `<div class="item-top"><span class="pill">AI draft</span><span class="time">${escapeHtml(time)}</span></div><p class="snippet">${escapeHtml(item.comment).slice(0, 140)}</p><p class="answer">${escapeHtml(item.reply).slice(0, 230)}</p><div class="item-actions"><button class="link copy">Copy reply</button><a class="link" target="_blank" rel="noopener noreferrer" href="${escapeHtml(item.videoUrl)}">View source</a></div>`;
+    node.innerHTML = `<button class="item-summary" type="button" aria-expanded="false"><div class="item-top"><span class="pill">Draft</span><span class="time">${escapeHtml(time)}</span></div><p class="reply-preview">${escapeHtml(item.reply)}</p></button><div class="item-details hidden"><div class="detail-label">Comment</div><p class="snippet">${escapeHtml(item.comment)}</p><div class="detail-label">Generated reply</div><p class="answer">${escapeHtml(item.reply)}</p><div class="item-actions"><button class="link copy" type="button">Copy reply</button><a class="source-icon" target="_blank" rel="noopener noreferrer" href="${escapeHtml(item.videoUrl)}" aria-label="View source" title="View source"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M9 2h5v5M14 2 7 9M13 9v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/></svg></a></div></div>`;
+    const summary = node.querySelector('.item-summary');
+    const details = node.querySelector('.item-details');
+    summary.addEventListener('click', () => {
+      const expanded = summary.getAttribute('aria-expanded') !== 'true';
+      summary.setAttribute('aria-expanded', String(expanded));
+      details.classList.toggle('hidden', !expanded);
+      node.classList.toggle('expanded', expanded);
+    });
     node.querySelector('.copy').addEventListener('click', async event => { await navigator.clipboard.writeText(item.reply); event.target.textContent = 'Copied!'; });
     target.append(node);
   }
