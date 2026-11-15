@@ -9,6 +9,21 @@ async function relayUrl(pathname) {
   return new URL(pathname, replyUrl.origin);
 }
 
+function n8nErrorDetails(data) {
+  const result = Array.isArray(data) ? data[0] : data;
+  const candidates = [
+    result?.error?.message, result?.error?.description, result?.error,
+    result?.message, result?.description, result?.details,
+    result?.output?.error, result?.output?.message,
+    result?.json?.error, result?.json?.message
+  ];
+  for (const candidate of candidates) {
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim().slice(0, 1500);
+    if (candidate && typeof candidate === 'object') return JSON.stringify(candidate).slice(0, 1500);
+  }
+  return '';
+}
+
 async function relayRequest(pathname, {method = 'POST', body, email} = {}) {
   const url = await relayUrl(pathname);
   if (email) url.searchParams.set('email', email);
@@ -21,7 +36,10 @@ async function relayRequest(pathname, {method = 'POST', body, email} = {}) {
   const text = await response.text();
   let data;
   try { data = text ? JSON.parse(text) : {}; } catch { data = {message: text}; }
-  if (!response.ok) throw new Error(data?.error || data?.message || `Service returned HTTP ${response.status}`);
+  if (!response.ok) {
+    const details = n8nErrorDetails(data) || 'No error details were returned by the webhook.';
+    throw new Error(`n8n request failed (${method} ${pathname}, HTTP ${response.status}): ${details}`);
+  }
   return data;
 }
 
@@ -55,7 +73,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (!code) throw new Error('Enter the verification code from your email.');
       const response = await relayRequest('/auth/verify-code', {body: {email: pendingEmail, code}});
       const result = Array.isArray(response) ? response[0] : response;
-      if (!verified(result)) throw new Error(result?.message || 'That verification code is not valid.');
+      if (!verified(result)) throw new Error(n8nErrorDetails(result) || 'That verification code is not valid.');
       const user = {email: pendingEmail, verifiedAt: new Date().toISOString(), agents: []};
       await chrome.storage.local.set({user, pendingEmail: ''});
       const agents = normalizeAgents(await relayRequest('/agents', {method: 'GET', email: user.email}));
@@ -79,7 +97,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const response = await relayRequest('/reply', {body: {...message.payload, email: user.email}});
       const result = Array.isArray(response) ? response[0] : response;
       const reply = result?.reply ?? result?.output?.reply ?? result?.output ?? result?.text;
-      if (typeof reply !== 'string' || !reply.trim()) throw new Error('Webhook must return JSON with a nonempty "reply" string.');
+      if (typeof reply !== 'string' || !reply.trim()) {
+        const details = n8nErrorDetails(result);
+        throw new Error(details ? `n8n returned an error: ${details}` : 'Webhook must return JSON with a nonempty "reply" string.');
+      }
       const item = {id: crypto.randomUUID(), ...message.payload, email: user.email, reply: reply.trim(), createdAt: new Date().toISOString(), status: 'drafted'};
       const {history = []} = await chrome.storage.local.get('history');
       await chrome.storage.local.set({history: [item, ...history].slice(0, MAX_HISTORY)});

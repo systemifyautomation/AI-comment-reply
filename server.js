@@ -63,7 +63,10 @@ const server = http.createServer(async (req, res) => {
     }
     res.writeHead(404).end();
   } catch (error) {
-    res.writeHead(502, {'Content-Type': 'application/json'}).end(JSON.stringify({error: error.message}));
+    res.writeHead(502, {'Content-Type': 'application/json'}).end(JSON.stringify({
+      error: 'ReplyFlow relay could not complete the n8n request.',
+      details: error.message
+    }));
   }
 });
 

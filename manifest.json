@@ -1,11 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "ReplyFlow \u2014 YouTube AI Replies",
+  "name": "ReplyFlow - Social AI Replies",
   "version": "2.1.0",
-  "description": "Draft contextual YouTube comment replies with your n8n webhook and review recent drafts.",
+  "description": "Draft contextual replies across supported social platforms with n8n.",
   "permissions": [
-    "storage",
-    "managedStorage"
+    "storage"
   ],
   "storage": {
     "managed_schema": "managed_schema.json"
@@ -23,7 +22,17 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.youtube.com/*"
+        "https://www.youtube.com/*",
+        "https://www.facebook.com/*",
+        "https://*.facebook.com/*",
+        "https://www.instagram.com/*",
+        "https://www.reddit.com/*",
+        "https://*.reddit.com/*",
+        "https://open.spotify.com/*",
+        "https://rumble.com/*",
+        "https://*.rumble.com/*",
+        "https://www.linkedin.com/*",
+        "https://*.linkedin.com/*"
       ],
       "js": [
         "content.js"
@@ -52,7 +61,6 @@
       "32": "icons/icon32.png"
     }
   },
-  "options_page": "settings.html",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",

@@ -6,6 +6,5 @@
       "type": "string",
       "description": "HTTPS URL for the ReplyFlow server-side relay. This is not the n8n webhook URL."
     }
-  },
-  "additionalProperties": false
+  }
 }
