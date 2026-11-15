@@ -11,11 +11,21 @@ function loadEnv(file) {
 }
 
 loadEnv(path.join(__dirname, '.env'));
-const replyWebhookUrl = process.env.REPLYFLOW_WEBHOOK_URL;
-const authWebhookUrl = process.env.REPLYFLOW_AUTH_WEBHOOK_URL;
-const accountsWebhookUrl = process.env.REPLYFLOW_ACCOUNTS_WEBHOOK_URL;
+const n8nUrl = process.env.REPLYFLOW_N8N_URL;
 const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean));
-if (!replyWebhookUrl || !authWebhookUrl || !accountsWebhookUrl) throw new Error('REPLYFLOW_WEBHOOK_URL, REPLYFLOW_AUTH_WEBHOOK_URL, and REPLYFLOW_ACCOUNTS_WEBHOOK_URL are required in .env');
+if (!n8nUrl) throw new Error('REPLYFLOW_N8N_URL is required in .env');
+
+let n8nBaseUrl;
+try {
+  n8nBaseUrl = new URL(n8nUrl);
+  if (!['https:', 'http:'].includes(n8nBaseUrl.protocol)) throw new Error('Unsupported protocol');
+} catch {
+  throw new Error('REPLYFLOW_N8N_URL must be a valid HTTP(S) URL.');
+}
+function n8nWebhook(pathname) { return new URL(`/webhook/${pathname}`, n8nBaseUrl); }
+const replyWebhookUrl = n8nWebhook('replyflow');
+const authWebhookUrl = n8nWebhook('replyflow-email-verification');
+const accountsWebhookUrl = n8nWebhook('replyflow-accounts');
 
 async function readJson(req) {
   let body = '';

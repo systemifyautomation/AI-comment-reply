@@ -1,0 +1,52 @@
+{
+  "name": "ReplyFlow - Grant VA client access",
+  "nodes": [
+    {
+      "parameters": {
+        "authentication": "n8nUserAuth",
+        "requireExecuteAccess": true,
+        "formTitle": "Grant ReplyFlow access",
+        "formDescription": "Add a VA email address and the UUID of the client they should be able to select.",
+        "formFields": {
+          "values": [
+            { "fieldName": "email", "fieldLabel": "VA email address", "fieldType": "email", "placeholder": "va@example.com", "requiredField": true },
+            { "fieldName": "client_id", "fieldLabel": "Client UUID", "fieldType": "text", "placeholder": "11111111-1111-4111-8111-111111111111", "requiredField": true }
+          ]
+        },
+        "responseMode": "lastNode",
+        "options": { "path": "replyflow-grant-access", "buttonLabel": "Grant access", "appendAttribution": false }
+      },
+      "id": "1", "name": "Admin access form", "type": "n8n-nodes-base.formTrigger", "typeVersion": 2.6, "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = String($json.email ?? '').trim().toLowerCase();\nconst clientId = String($json.client_id ?? '').trim();\nif (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) throw new Error('Enter a valid VA email address.');\nif (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(clientId)) throw new Error('Enter a valid client UUID.');\nreturn [{ json: { email, client_id: clientId, active: true } }];"
+      },
+      "id": "2", "name": "Validate access request", "type": "n8n-nodes-base.code", "typeVersion": 2, "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "resource": "row", "operation": "create", "tableId": "replyflow_client_access", "dataToSend": "defineBelow",
+        "fieldsUi": { "fieldValues": [
+          { "fieldId": "email", "fieldValue": "={{ $json.email }}" },
+          { "fieldId": "client_id", "fieldValue": "={{ $json.client_id }}" },
+          { "fieldId": "active", "fieldValue": "true" }
+        ] }
+      },
+      "id": "3", "name": "Create VA access", "type": "n8n-nodes-base.supabase", "typeVersion": 1, "position": [500, 300],
+      "credentials": { "supabaseApi": { "id": "YifWue3Pz7ioB68D", "name": "Systemify Cold Leads" } }
+    },
+    {
+      "parameters": {
+        "operation": "completion", "respondWith": "text", "completionTitle": "Access granted", "completionMessage": "The VA can now verify their email and select this client in ReplyFlow."
+      },
+      "id": "4", "name": "Access granted page", "type": "n8n-nodes-base.form", "typeVersion": 2.5, "position": [750, 300]
+    }
+  ],
+  "connections": {
+    "Admin access form": { "main": [[{ "node": "Validate access request", "type": "main", "index": 0 }]] },
+    "Validate access request": { "main": [[{ "node": "Create VA access", "type": "main", "index": 0 }]] },
+    "Create VA access": { "main": [[{ "node": "Access granted page", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {}, "active": false, "settings": { "executionOrder": "v1" }, "versionId": "1", "meta": { "templateCredsSetupCompleted": true }, "tags": []
+}

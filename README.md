@@ -19,11 +19,7 @@ The extension calls the relay only. The relay holds the private n8n webhook URLs
 Deploy `server.js` separately from the extension. It requires Node.js 18 or later. On the relay host, create `.env` from `.env.example`:
 
 ```dotenv
-REPLYFLOW_WEBHOOK_URL=https://your-n8n-host/webhook/replyflow
-REPLYFLOW_AUTH_WEBHOOK_URL=https://your-n8n-host/webhook/replyflow-email-verification
-REPLYFLOW_ACCOUNTS_WEBHOOK_URL=https://your-n8n-host/webhook/replyflow-accounts
-PORT=3000
-ALLOWED_ORIGINS=chrome-extension://your-extension-id
+REPLYFLOW_N8N_URL=https://your-n8n-host
 ```
 
 Start it with:
@@ -36,10 +32,12 @@ Expose the relay through HTTPS in production. Its routes are:
 
 | Method | Relay endpoint | n8n webhook | Purpose |
 | --- | --- | --- | --- |
-| POST | `/auth/request-code` | `REPLYFLOW_AUTH_WEBHOOK_URL` | Email a verification code. |
-| POST | `/auth/verify-code` | `REPLYFLOW_AUTH_WEBHOOK_URL` | Verify a code. |
-| GET | `/accounts?email=...` | `REPLYFLOW_ACCOUNTS_WEBHOOK_URL` | Get the clients available to the email. |
-| POST | `/reply` | `REPLYFLOW_WEBHOOK_URL` | Generate a reply using the selected client's information. |
+| POST | `/auth/request-code` | `/webhook/replyflow-email-verification` | Email a verification code. |
+| POST | `/auth/verify-code` | `/webhook/replyflow-email-verification` | Verify a code. |
+| GET | `/accounts?email=...` | `/webhook/replyflow-accounts` | Get the clients available to the email. |
+| POST | `/reply` | `/webhook/replyflow` | Generate a reply using the selected client's information. |
+
+Import-ready n8n workflows and the required Supabase schema are in [N8N](N8N/README.md). They use Brevo SMTP for the email code and Supabase for client access and verification-code storage.
 
 ## Extension setup
 
@@ -63,8 +61,8 @@ The extension stores this local Chrome-storage object after verification:
 {
   "email": "va@example.com",
   "verifiedAt": "2026-11-15T10:00:00.000Z",
-  "accounts": [{ "id": "acme", "name": "Acme" }],
-  "accountId": "acme",
+  "accounts": [{ "id": "11111111-1111-4111-8111-111111111111", "name": "Acme" }],
+  "accountId": "11111111-1111-4111-8111-111111111111",
   "accountName": "Acme"
 }
 ```
@@ -75,7 +73,7 @@ For a user with multiple clients, `accountId` and `accountName` are initially em
 
 ### 1. Request email code
 
-**POST** `REPLYFLOW_AUTH_WEBHOOK_URL`
+**POST** `REPLYFLOW_N8N_URL/webhook/replyflow-email-verification`
 
 ```json
 { "email": "va@example.com", "action": "request_code" }
@@ -89,7 +87,7 @@ A successful 2xx response indicates that the request was accepted. Optional exam
 
 ### 2. Verify email code
 
-**POST** `REPLYFLOW_AUTH_WEBHOOK_URL`
+**POST** `REPLYFLOW_N8N_URL/webhook/replyflow-email-verification`
 
 ```json
 { "email": "va@example.com", "code": "123456", "action": "verify_code" }
@@ -105,24 +103,24 @@ The response must include one of these truthy verification fields:
 
 ### 3. Get clients
 
-**GET** `REPLYFLOW_ACCOUNTS_WEBHOOK_URL?email=va%40example.com`
+**GET** `REPLYFLOW_N8N_URL/webhook/replyflow-accounts?email=va%40example.com`
 
 Return a direct array or an object with `accounts` or `data`:
 
 ```json
 {
   "accounts": [
-    { "id": "acme", "name": "Acme" },
+    { "id": "11111111-1111-4111-8111-111111111111", "name": "Acme" },
     { "id": "northstar", "name": "Northstar Media" }
   ]
 }
 ```
 
-An account is a client in the extension UI. It may be a string or an object. Object IDs can use `id`, `accountId`, or `value`; labels can use `name`, `clientName`, or `title`. n8n should resolve the client's channels, brand details, and single AI-agent configuration internally.
+An account is a client in the extension UI. It may be a string or an object. Object IDs can use `id`, `accountId`, or `value`; client IDs should be UUIDs. Labels can use `name`, `clientName`, or `title`. n8n should resolve the client's channels, brand details, and single AI-agent configuration internally.
 
 ### 4. Generate a reply
 
-**POST** `REPLYFLOW_WEBHOOK_URL`
+**POST** `REPLYFLOW_N8N_URL/webhook/replyflow`
 
 ```json
 {
@@ -132,7 +130,7 @@ An account is a client in the extension UI. It may be a string or an object. Obj
   "channelID": "linkedin:/company/acme",
   "videoChannelId": "linkedin:/company/acme",
   "email": "va@example.com",
-  "accountId": "acme"
+  "accountId": "11111111-1111-4111-8111-111111111111"
 }
 ```
 
@@ -149,7 +147,7 @@ Return:
 For every request, return a non-2xx status with an `error`, `message`, `description`, or `details` field when a request fails. ReplyFlow displays the returned detail to the user.
 
 ```json
-{ "error": "Account access denied", "details": "This email is not assigned to youtube-acme." }
+{ "error": "Account access denied", "details": "This email is not assigned to the selected client." }
 ```
 
 ## Security notes
