@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="ui.css">
   <link rel="stylesheet" href="extras.css">
+  <link rel="stylesheet" href="settings.css">
   <title>ReplyFlow</title>
 </head>
 <body class="popup">
@@ -40,13 +41,18 @@
     </section>
 
     <section id="settings-tab" class="tab-panel hidden">
-      <div class="eyebrow">ReplyFlow account</div>
-      <h2>Email verification</h2>
-      <p class="hint">Verify your email to access the client information assigned to you.</p>
-      <form id="email-form" class="field"><label for="email">Email address</label><input id="email" type="email" autocomplete="email" required><button class="primary full-width" type="submit">Email me a code</button></form>
-      <form id="code-form" class="field hidden"><label for="code">Verification code</label><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" required><button class="primary full-width" type="submit">Verify code</button></form>
+      <div class="settings-title-row">
+        <div><div class="eyebrow">ReplyFlow account</div><h2>Settings</h2></div>
+        <section id="accounts-section" class="client-picker hidden"><label for="account-select">Client</label><select id="account-select" aria-label="Client"></select><button id="account-confirm" class="primary hidden" type="button" disabled>Confirm</button><button id="refresh-accounts" class="link" type="button">Refresh</button></section>
+      </div>
+      <section id="verification-section">
+        <h3>Email verification</h3>
+        <p class="hint">Verify your email to access the client information assigned to you.</p>
+        <form id="email-form" class="field"><label for="email">Email address</label><input id="email" type="email" autocomplete="email" required><button class="primary full-width" type="submit">Email me a code</button></form>
+        <form id="code-form" class="field hidden"><label for="code">Verification code</label><input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" required><button class="primary full-width" type="submit">Verify code</button></form>
+      </section>
       <p id="status" class="notice" role="status"></p>
-      <section id="accounts-section" class="field hidden"><label for="account-select">Client</label><p class="hint">Choose the client whose information ReplyFlow should use. Your selection must be confirmed before replies can be generated.</p><select id="account-select" aria-label="Client"></select><button id="account-confirm" class="primary full-width hidden" type="button" disabled>Confirm client</button><button id="refresh-accounts" class="link" type="button">Refresh clients</button></section>
+      <section class="reset-section"><div><div class="eyebrow">Start over</div><p class="hint">Forget this email, client selection, and locally saved drafts on this browser.</p></div><button id="reset-app" class="secondary" type="button">Reset</button></section>
     </section>
   </main>
   <script src="popup.js"></script>

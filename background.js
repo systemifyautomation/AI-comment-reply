@@ -90,6 +90,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return {user: nextUser};
     }
 
+    if (message.type === 'RESET_APP') {
+      await chrome.storage.local.clear();
+      return {reset: true};
+    }
+
     if (message.type === 'GENERATE_REPLY') {
       const {enabled = true, user} = await chrome.storage.local.get(['enabled', 'user']);
       if (!enabled) throw new Error('ReplyFlow is turned off.');

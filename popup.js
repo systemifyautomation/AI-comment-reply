@@ -6,6 +6,7 @@ const codeForm = document.getElementById('code-form');
 const emailInput = document.getElementById('email');
 const codeInput = document.getElementById('code');
 const status = document.getElementById('status');
+const verificationSection = document.getElementById('verification-section');
 const accountsSection = document.getElementById('accounts-section');
 const accountSelect = document.getElementById('account-select');
 const accountConfirm = document.getElementById('account-confirm');
@@ -33,6 +34,7 @@ function showManualStatus(message, isError = false) { manualStatus.textContent =
 function accountId(account) { return String(typeof account === 'string' ? account : account?.id ?? account?.accountId ?? account?.value ?? ''); }
 function accountName(account) { return typeof account === 'string' ? account : account?.name ?? account?.clientName ?? account?.title ?? accountId(account); }
 function showUser(user) { userSummary.textContent = user?.accountName ? `${user.email} - ${user.accountName}` : user?.email || 'Email verification required'; }
+function setVerificationState(isVerified) { verificationSection.classList.toggle('hidden', isVerified); }
 
 function renderClients(accounts, selectedId = '') {
   confirmedAccountId = selectedId;
@@ -90,7 +92,7 @@ manualForm.addEventListener('submit', async event => {
   manualResult.classList.add('hidden');
   showManualStatus('');
   try {
-    const response = await send({type: 'GENERATE_REPLY', payload: {comment, videoUrl: 'manual://replyflow', videoTitle: 'Manual reply', channelID: 'manual', videoChannelId: 'manual'}});
+    const response = await send({type: 'GENERATE_REPLY', payload: {comment, videoUrl: 'manual://replyflow', videoTitle: 'Manual reply', channelID: 'manual', actorID: 'manual'}});
     manualReply.value = response.reply;
     manualResult.classList.remove('hidden');
     showManualStatus('Draft generated. Copy it when you are ready.');
@@ -118,6 +120,7 @@ codeForm.addEventListener('submit', async event => {
     const {user} = await send({type: 'VERIFY_CODE', code: codeInput.value});
     showUser(user);
     renderClients(user.accounts || [], user.accountId);
+    setVerificationState(true);
     codeForm.classList.add('hidden');
     codeInput.value = '';
     showStatus(user.accountId ? `Verified as ${user.email}.` : 'Verified. Choose and confirm a client.');
@@ -132,6 +135,22 @@ document.getElementById('refresh-accounts').addEventListener('click', async () =
     showStatus('Clients updated.');
   } catch (error) { showStatus(error.message, true); }
 });
+document.getElementById('reset-app').addEventListener('click', async () => {
+  try {
+    await send({type: 'RESET_APP'});
+    confirmedAccountId = '';
+    emailForm.reset();
+    codeForm.reset();
+    codeForm.classList.add('hidden');
+    accountsSection.classList.add('hidden');
+    accountSelect.replaceChildren();
+    setVerificationState(false);
+    showUser(null);
+    showStatus('ReplyFlow data has been cleared.');
+    document.getElementById('history').innerHTML = '<div class="empty"><div class="empty-symbol">*</div><strong>No replies yet</strong>Open a supported platform, click Reply on a comment, then Generate AI Reply.</div>';
+    document.getElementById('count').textContent = '0';
+  } catch (error) { showStatus(error.message, true); }
+});
 
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
 async function restoreState() {
@@ -142,11 +161,14 @@ async function restoreState() {
     emailInput.value = user.email;
     showUser(user);
     renderClients(user.accounts || [], user.accountId);
+    setVerificationState(true);
     showStatus(user.accountId ? `Verified as ${user.email}.` : 'Choose and confirm a client.');
   } else if (pendingEmail) {
     emailInput.value = pendingEmail;
     codeForm.classList.remove('hidden');
     showStatus('Enter the code sent to your email.');
+  } else {
+    setVerificationState(false);
   }
   document.getElementById('count').textContent = history.length;
   const target = document.getElementById('history');

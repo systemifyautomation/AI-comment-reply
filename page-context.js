@@ -11,8 +11,23 @@
       || null;
   };
 
+  const getActorId = () => {
+    const config = window.ytcfg;
+    const configuredId = config?.get?.('DELEGATED_SESSION_ID') || config?.get?.('LOGGED_IN_CHANNEL_ID') || config?.get?.('CHANNEL_ID');
+    if (typeof configuredId === 'string' && configuredId) return configuredId;
+
+    const header = window.ytInitialData?.topbar?.desktopTopbarRenderer?.topbarButtons
+      ?.map(button => button?.topbarMenuButtonRenderer?.menuRenderer?.multiPageMenuRenderer?.header?.activeAccountHeaderRenderer)
+      .find(Boolean);
+    return header?.channelHandle?.simpleText || header?.accountName?.simpleText || '';
+  };
+
   window.addEventListener('message', event => {
     if (event.source !== window || event.data?.source !== 'replyflow-extension') return;
+    if (event.data.type === 'GET_ACTOR_ID') {
+      window.postMessage({source: 'replyflow-page', type: 'ACTOR_ID', requestId: event.data.requestId, actorId: getActorId()}, location.origin);
+      return;
+    }
     if (event.data.type !== 'GET_CHANNEL_ID') return;
     window.postMessage({
       source: 'replyflow-page',

@@ -100,13 +100,13 @@ An account is a client in the extension UI. It may be a string or an object. Obj
   "videoUrl": "https://www.linkedin.com/feed/update/...",
   "videoTitle": "Page or post title",
   "channelID": "linkedin:/company/acme",
-  "videoChannelId": "linkedin:/company/acme",
+  "actorID": "linkedin:/in/ava-example",
   "email": "va@example.com",
   "accountId": "11111111-1111-4111-8111-111111111111"
 }
 ```
 
-The same reply structure is used on every platform. For manual replies, `videoUrl` is `manual://replyflow`, `videoTitle` is `Manual reply`, and both channel fields are `manual`.
+The same reply structure is used on every platform. `channelID` identifies the channel/page that owns the content being replied to. `actorID` is a best-effort identifier for the signed-in profile operating ReplyFlow (on YouTube, the active channel ID or handle when YouTube exposes it). It is audit context, not proof of authorization; the backend must continue authorizing access by verified email and selected client. For manual replies, `videoUrl` is `manual://replyflow`, `videoTitle` is `Manual reply`, and both identifiers are `manual`.
 
 Return:
 
