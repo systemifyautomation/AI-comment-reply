@@ -13,8 +13,9 @@ function loadEnv(file) {
 loadEnv(path.join(__dirname, '.env'));
 const replyWebhookUrl = process.env.REPLYFLOW_WEBHOOK_URL;
 const authWebhookUrl = process.env.REPLYFLOW_AUTH_WEBHOOK_URL;
+const accountsWebhookUrl = process.env.REPLYFLOW_ACCOUNTS_WEBHOOK_URL;
 const allowedOrigins = new Set((process.env.ALLOWED_ORIGINS || '').split(',').map(value => value.trim()).filter(Boolean));
-if (!replyWebhookUrl || !authWebhookUrl) throw new Error('REPLYFLOW_WEBHOOK_URL and REPLYFLOW_AUTH_WEBHOOK_URL are required in .env');
+if (!replyWebhookUrl || !authWebhookUrl || !accountsWebhookUrl) throw new Error('REPLYFLOW_WEBHOOK_URL, REPLYFLOW_AUTH_WEBHOOK_URL, and REPLYFLOW_ACCOUNTS_WEBHOOK_URL are required in .env');
 
 async function readJson(req) {
   let body = '';
@@ -54,10 +55,10 @@ const server = http.createServer(async (req, res) => {
       const body = await readJson(req);
       return forward(res, authWebhookUrl, 'POST', {...body, action: 'verify_code'});
     }
-    if (req.method === 'GET' && requestUrl.pathname === '/agents') {
+    if (req.method === 'GET' && requestUrl.pathname === '/accounts') {
       const email = requestUrl.searchParams.get('email');
       if (!email) return res.writeHead(400).end(JSON.stringify({error: 'email is required.'}));
-      const webhookUrl = new URL(replyWebhookUrl);
+      const webhookUrl = new URL(accountsWebhookUrl);
       webhookUrl.searchParams.set('email', email);
       return forward(res, webhookUrl, 'GET');
     }
